@@ -1,0 +1,6 @@
+__pycache__/
+.idea/
+
+_secrets.py
+*.pkl
+*.log
