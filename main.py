@@ -34,8 +34,11 @@ def main():
     while True:
         log.debug("Checking for new commits...")
         try:
-            with open(pkl_fn, 'rb') as f:
-                last_commit = pickle.load(f)
+            try:
+                with open(pkl_fn, 'rb') as f:
+                    last_commit = pickle.load(f)
+            except FileNotFoundError:
+                pass
 
             log.debug(f"Last commit: {last_commit}")
             auth = Auth.Token(gh_pat)
