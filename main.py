@@ -30,27 +30,35 @@ def main():
         "/nDisplay",
         "ChaosVehicle",
     ]
-    last_commit = None
+    old_latest_commit = None
+    new_latest_commit = None
     while True:
         log.debug("Checking for new commits...")
         try:
             try:
                 with open(pkl_fn, 'rb') as f:
-                    last_commit = pickle.load(f)
+                    old_latest_commit = pickle.load(f)
             except FileNotFoundError:
                 pass
-
-            log.debug(f"Last commit: {last_commit}")
+            new_latest_commit = old_latest_commit
+            log.debug(f"Last commit: {old_latest_commit}")
             auth = Auth.Token(gh_pat)
             g = Github(auth=auth)
 
             repo = g.get_repo("EpicGames/UnrealEngine")
             for i, commit in enumerate(repo.get_commits("ue5-main")):
-                if last_commit is None:
-                    last_commit = commit.sha
-                    log.debug(f"Initializing script at commit {last_commit}")
                 log.debug(f"Checking commit #{i}: {commit.sha}")
-                if last_commit == commit.sha:
+                if i == 0:
+                    log.debug(f"New latest commit: {commit.sha}")
+                    new_latest_commit = commit.sha
+                if i == 1000:
+                    log.debug("Reached 1000 commits, stopping")
+                    break
+                if old_latest_commit is None:
+                    log.debug(f"Initializing script at commit {old_latest_commit}, stopping")
+                    break
+                if old_latest_commit == commit.sha:
+                    log.debug(f"Reached last seen commit {old_latest_commit}, stopping")
                     break
                 for f in commit.files:
                     if f.filename.endswith(".uplugin") and f.status == "added":
@@ -61,13 +69,11 @@ def main():
                             notify(f"Changes in {p}", commit)
                             break
                     else:
+                        # File didn't match any of our filter, move to next file
                         continue
+                    # We had a match, move to next commit
                     break
-                if i == 0:
-                    last_commit = commit.sha
-                if i == 1000:
-                    log.debug("Reached 1000 commits")
-                    break
+
             g.close()
         except Exception as e:
             webhook = DiscordWebhook(url=discord_webhook_url_debug)
@@ -82,7 +88,7 @@ def main():
             log.exception("An error occurred while checking for commits.")
         finally:
             with open(pkl_fn, 'wb') as f:
-                pickle.dump(last_commit, f, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(new_latest_commit, f, pickle.HIGHEST_PROTOCOL)
         log.debug("Iteration complete, sleeping for 30 minutes...")
         sleep(60*30)
 
