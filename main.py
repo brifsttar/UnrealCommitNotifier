@@ -29,6 +29,7 @@ def main():
     paths_to_match = [
         "/nDisplay",
         "ChaosVehicle",
+        "Switchboard",
     ]
     old_latest_commit = None
     new_latest_commit = None
