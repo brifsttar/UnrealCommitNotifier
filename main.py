@@ -9,9 +9,16 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 from _secrets import *
 
 
-def notify(header: str, commit: github.Commit.Commit):
+def notify_filtered(header: str, commit: github.Commit.Commit):
     msg = f"# {header}\n\n```{commit.commit.message}```\n<{commit.html_url}>"
-    webhook = DiscordWebhook(url=discord_webhook_url_main, content=msg)
+    webhook = DiscordWebhook(url=discord_webhook_url_filtered, content=msg)
+    response = webhook.execute()
+    log.info(msg)
+
+
+def notify_general(commit: github.Commit.Commit):
+    msg = f"[`{commit.sha[:7]}`](<{commit.html_url}>) {commit.commit.message.splitlines()[0]} *({commit.commit.author.name})*"
+    webhook = DiscordWebhook(url=discord_webhook_url_all, content=msg)
     response = webhook.execute()
     log.info(msg)
 
@@ -63,17 +70,21 @@ def main():
                     break
                 for f in commit.files:
                     if f.filename.endswith(".uplugin") and f.status == "added":
-                        notify("New plugin", commit)
+                        notify_filtered("New plugin", commit)
                         break
                     for p in paths_to_match:
                         if p.lower() in f.filename.lower():
-                            notify(f"Changes in {p}", commit)
+                            notify_filtered(f"Changes in {p}", commit)
                             break
                     else:
                         # File didn't match any of our filter, move to next file
                         continue
                     # We had a match, move to next commit
                     break
+                else:
+                    # No filter matched, sending to general
+                    notify_general(commit)
+                    pass
 
             g.close()
         except Exception as e:
