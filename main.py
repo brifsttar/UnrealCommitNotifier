@@ -11,14 +11,16 @@ from _secrets import *
 
 def notify_filtered(header: str, commit: github.Commit.Commit):
     msg = f"# {header}\n\n```{commit.commit.message}```\n<{commit.html_url}>"
-    webhook = DiscordWebhook(url=discord_webhook_url_filtered, content=msg)
-    response = webhook.execute()
-    log.info(msg)
+    send_message(msg, discord_webhook_url_filtered)
 
 
 def notify_general(commit: github.Commit.Commit):
     msg = f"[`{commit.sha[:7]}`](<{commit.html_url}>) {commit.commit.message.splitlines()[0]} *({commit.commit.author.name})*"
-    webhook = DiscordWebhook(url=discord_webhook_url_all, content=msg)
+    send_message(msg, discord_webhook_url_all)
+
+
+def send_message(msg: str, webhook_url: str):
+    webhook = DiscordWebhook(url=webhook_url, content=msg, rate_limit_retry=True)
     response = webhook.execute()
     log.info(msg)
 
