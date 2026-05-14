@@ -105,7 +105,7 @@ def main():
             with open(pkl_fn, 'wb') as f:
                 pickle.dump(new_latest_commit, f, pickle.HIGHEST_PROTOCOL)
         log.debug("Iteration complete, sleeping for 30 minutes...")
-        sleep(60*30)
+        sleep(60*10)
 
 
 if __name__ == '__main__':
