@@ -54,6 +54,7 @@ def main():
             g = Github(auth=auth)
 
             repo = g.get_repo("EpicGames/UnrealEngine")
+            new_commits = []
             for i, commit in enumerate(repo.get_commits("ue5-main")):
                 log.debug(f"Checking commit #{i}: {commit.sha}")
                 if i == 0:
@@ -83,9 +84,9 @@ def main():
                     break
                 else:
                     # No filter matched, sending to general
-                    notify_general(commit)
-                    pass
-
+                    new_commits.append(commit)
+            for commit in reversed(new_commits):
+                notify_general(commit)
             g.close()
         except Exception as e:
             webhook = DiscordWebhook(url=discord_webhook_url_debug)
